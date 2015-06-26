@@ -10,7 +10,7 @@ package org.dspace.ctask.general;
 import java.io.IOException;
 import java.sql.SQLException;
 
-import org.dspace.storage.bitstore.BitstreamStorageManager;
+import org.dspace.authorize.AuthorizeException;
 import org.dspace.content.Item;
 import org.dspace.content.Bundle;
 import org.dspace.content.Bitstream;
@@ -20,6 +20,7 @@ import org.dspace.core.Context;
 import org.dspace.curate.AbstractCurationTask;
 import org.dspace.curate.Curator;
 import org.dspace.curate.Distributive;
+import org.dspace.storage.bitstore.BitstreamStorageManager;
 
 /* TODO: Create curation task to purge files marked for deletion */
 
