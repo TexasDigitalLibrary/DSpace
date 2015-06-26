@@ -54,19 +54,19 @@ public class DataMigration extends AbstractCurationTask
             {
                 
                 // Get the current asset store location used by dspace (defined in dspace.cfg). Set to default (0) if not found.
-                dspaceStoreNumber = ConfigurationManager.getProperty("assetstore.incoming");
-                if ( storeNumber == null ) {
-                    storeNumber = 0;
+                int dspaceStoreNumber = ConfigurationManager.getProperty("assetstore.incoming");
+                if ( dspaceStoreNumber == null ) {
+                    dspaceStoreNumber = 0;
                 }
 
                 // Only migrate bitstreams that are not stored in the current dspace asset store location and have not been marked for deletion.
-                if ( bitstream.getStoreNumber() != dspaceStoreNumber && bitstream.isDeleted != true ) {
+                if ( bitstream.getStoreNumber() != dspaceStoreNumber && bitstream.isDeleted() != true ) {
 
                     // Create new bitstream object in the current dspace asset store location, and create new bitstream in DB.
                     Bitstream newBitstream = bundle.createBitstream( bitstream.retrieve() );
 
                     // Mark old bitsream for deletion.
-                    bundle.deleteBitstream( bitstream );
+                    bundle.removeBitstream( bitstream );
 
                 }
                 else {
