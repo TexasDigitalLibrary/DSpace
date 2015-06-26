@@ -9,17 +9,16 @@ package org.dspace.ctask.general;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
 
-import org.dspace.content.Bundle;
-import org.dspace.content.DSpaceObject;
+import org.dspace.storage.bitstore.BitstreamStorageManager;
 import org.dspace.content.Item;
+import org.dspace.content.Bundle;
+import org.dspace.content.Bitstream;
+import org.dspace.content.DSpaceObject;
 import org.dspace.core.Context;
 import org.dspace.curate.AbstractCurationTask;
 import org.dspace.curate.Curator;
 import org.dspace.curate.Distributive;
-import org.dspace.storage.bitstore.BitstreamStorageManager;
 
 /* TODO: Create curation task to purge files marked for deletion? (needs to happen 1 hr after files are marked)
     import org.dspace.storage.bitstore.BitstreamStorageManager;
