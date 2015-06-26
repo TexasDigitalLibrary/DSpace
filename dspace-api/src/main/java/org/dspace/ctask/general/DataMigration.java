@@ -10,6 +10,7 @@ package org.dspace.ctask.general;
 import java.io.IOException;
 import java.sql.SQLException;
 
+import org.apache.log4j.Logger;
 import org.dspace.authorize.AuthorizeException;
 import org.dspace.content.Item;
 import org.dspace.content.Bundle;
@@ -37,6 +38,10 @@ public class DataMigration extends AbstractCurationTask
      * @param dso the DSpace object
      * @throws IOException
      */
+
+    /** log4j logger */
+    private static final Logger log = Logger.getLogger(Bitstream.class);
+
     @Override
     public int perform(DSpaceObject dso) throws IOException
     {
@@ -68,12 +73,19 @@ public class DataMigration extends AbstractCurationTask
                         Bitstream newBitstream = bundle.createBitstream( bitstream.retrieve() );    
                     }
                     catch ( AuthorizeException ae ) {
-                        // TODO: Figure out how to handle unauthorized transactions. Only log? Can we tell the user?
+                        // TODO: Surface authorization error to the UI so the user can become aware.
+                        log.error("Authorization error while attempting to create bitstream from ID "+bitstream.getID()+". ", ae);
                     }
                     
 
                     // Mark old bitsream for deletion.
-                    bundle.removeBitstream( bitstream );
+                    try{
+                        bundle.removeBitstream( bitstream );
+                    }
+                    catch ( AuthorizeException ae ) {
+                        // TODO: Surface authorization error to the UI so the user can become aware.
+                        log.error("Authorization error while attempting to delete bitstream with ID "+bitstream.getID()+". ", ae);
+                    }
 
                 }
                 else {
