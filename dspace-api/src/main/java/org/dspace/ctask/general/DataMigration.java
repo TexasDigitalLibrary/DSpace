@@ -45,7 +45,7 @@ public class DataMigration extends AbstractCurationTask
     }
     
     @Override
-    protected void performItem(Item item) throws SQLException, IOException
+    protected void performItem(Item item) throws SQLException, IOException, AuthorizeException
     {
         
         for ( Bundle bundle : item.getBundles() )
