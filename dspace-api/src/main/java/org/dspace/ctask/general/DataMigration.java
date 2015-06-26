@@ -15,6 +15,7 @@ import org.dspace.content.Item;
 import org.dspace.content.Bundle;
 import org.dspace.content.Bitstream;
 import org.dspace.content.DSpaceObject;
+import org.dspace.core.ConfigurationManager;
 import org.dspace.core.Context;
 import org.dspace.curate.AbstractCurationTask;
 import org.dspace.curate.Curator;
@@ -47,9 +48,9 @@ public class DataMigration extends AbstractCurationTask
     protected void performItem(Item item) throws SQLException, IOException
     {
         
-        for (Bundle bundle : item.getBundles())
+        for ( Bundle bundle : item.getBundles() )
         {
-            for (Bitstream bitstream : bundle.getBitstreams())
+            for ( Bitstream bitstream : bundle.getBitstreams() )
             {
                 
                 // Get the current asset store location used by dspace (defined in dspace.cfg). Set to default (0) if not found.
