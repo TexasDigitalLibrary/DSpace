@@ -20,7 +20,6 @@ import org.dspace.core.Context;
 import org.dspace.curate.AbstractCurationTask;
 import org.dspace.curate.Curator;
 import org.dspace.curate.Distributive;
-import org.dspace.storage.bitstore.BitstreamStorageManager;
 
 /* TODO: Create curation task to purge files marked for deletion */
 
@@ -46,7 +45,7 @@ public class DataMigration extends AbstractCurationTask
     }
     
     @Override
-    protected void performItem(Item item) throws SQLException, IOException, AuthorizeException
+    protected void performItem(Item item) throws SQLException, IOException 
     {
         
         for ( Bundle bundle : item.getBundles() )
@@ -65,7 +64,13 @@ public class DataMigration extends AbstractCurationTask
                 if ( bitstream.getStoreNumber() != dspaceStoreNumber && bitstream.isDeleted() != true ) {
 
                     // Create new bitstream object in the current dspace asset store location, and create new bitstream in DB.
-                    Bitstream newBitstream = bundle.createBitstream( bitstream.retrieve() );
+                    try{
+                        Bitstream newBitstream = bundle.createBitstream( bitstream.retrieve() );    
+                    }
+                    catch ( AuthorizeException ae ) {
+                        // TODO: Figure out how to handle unauthorized transactions. Only log? Can we tell the user?
+                    }
+                    
 
                     // Mark old bitsream for deletion.
                     bundle.removeBitstream( bitstream );
