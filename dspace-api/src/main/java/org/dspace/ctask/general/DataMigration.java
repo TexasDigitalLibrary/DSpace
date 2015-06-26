@@ -54,7 +54,7 @@ public class DataMigration extends AbstractCurationTask
             {
                 
                 // Get the current asset store location used by dspace (defined in dspace.cfg). Set to default (0) if not found.
-                String dspaceStoreNumberString = ConfigurationManager.getProperty("assetstore.incoming"));
+                String dspaceStoreNumberString = ConfigurationManager.getProperty("assetstore.incoming");
                 int dspaceStoreNumber = 0; // Default asset store location
                 if ( dspaceStoreNumberString != null ) {
                     dspaceStoreNumber = Integer.parseInt(dspaceStoreNumberString);
