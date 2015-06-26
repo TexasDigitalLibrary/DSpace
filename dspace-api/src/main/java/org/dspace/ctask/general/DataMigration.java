@@ -20,9 +20,6 @@ import org.dspace.curate.AbstractCurationTask;
 import org.dspace.curate.Curator;
 import org.dspace.curate.Distributive;
 import org.dspace.storage.bitstore.BitstreamStorageManager;
-import org.dspace.storage.rdbms.DatabaseManager;
-import org.dspace.storage.rdbms.TableRow;
-import org.dspace.storage.rdbms.TableRowIterator;
 
 /* TODO: Create curation task to purge files marked for deletion? (needs to happen 1 hr after files are marked)
     import org.dspace.storage.bitstore.BitstreamStorageManager;
@@ -79,7 +76,7 @@ public class DataMigration extends AbstractCurationTask
         Context context = new Context();
 
         // Creating new copy of bitstream.
-        int oldID = bs.getID()
+        int oldID = bs.getID();
         int newID = BitstreamStorageManager.store( 
             context, BitstreamStorageManager.retrieve( context, oldID ) );
 
