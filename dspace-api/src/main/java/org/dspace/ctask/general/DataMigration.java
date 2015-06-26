@@ -20,15 +20,10 @@ import org.dspace.curate.AbstractCurationTask;
 import org.dspace.curate.Curator;
 import org.dspace.curate.Distributive;
 
-/* TODO: Create curation task to purge files marked for deletion? (needs to happen 1 hr after files are marked)
-    import org.dspace.storage.bitstore.BitstreamStorageManager;
-    deleteDbRecords = true;
-    verbose = true;
-    cleanup( deleteDbRecords, verbose)*/
+/* TODO: Create curation task to purge files marked for deletion */
 
 /**
- * DataMigration is a task that migrates bitstreams scattered across multiple
- * asset stores to the asset store assigned for writing.
+ * DataMigration is a task that migrate bitstreams from different asset stores to dspace's currently asset store.
  *
  * @author arturoklie
  */
@@ -54,34 +49,29 @@ public class DataMigration extends AbstractCurationTask
         
         for (Bundle bundle : item.getBundles())
         {
-            for (Bitstream bs : bundle.getBitstreams())
+            for (Bitstream bitstream : bundle.getBitstreams())
             {
-                // If this bitstream's stored location doesn't match the set storage location, then migrate
-                if ( bs.getStoreNumber() != 1 ) {
+                
+                // Get the current asset store location used by dspace (defined in dspace.cfg). Set to default (0) if not found.
+                dspaceStoreNumber = ConfigurationManager.getProperty("assetstore.incoming");
+                if ( storeNumber == null ) {
+                    storeNumber = 0;
+                }
 
-                    migrateBitstreamData( bs );
+                // Only migrate bitstreams that are not stored in the current dspace asset store location and have not been marked for deletion.
+                if ( bitstream.getStoreNumber() != dspaceStoreNumber && bitstream.isDeleted != true ) {
+
+                    // Create new bitstream object in the current dspace asset store location, and create new bitstream in DB.
+                    Bitstream newBitstream = bundle.createBitstream( bitstream.retrieve() );
+
+                    // Mark old bitsream for deletion.
+                    bundle.deleteBitstream( bitstream );
 
                 }
                 else {
-                    // Do nothing
+                    // Do nothing if the bitstream is already in the current dspace asset store location.
                 }
             }           
         }
-        
     }
-
-    private void migrateBitstreamData(Bitstream bs) throws SQLException, IOException
-    {
-        Context context = new Context();
-
-        // Creating new copy of bitstream.
-        int oldID = bs.getID();
-        int newID = BitstreamStorageManager.store( 
-            context, BitstreamStorageManager.retrieve( context, oldID ) );
-
-        // Delete old bitsream
-        BitstreamStorageManager.delete(context, oldID);
-
-        context.complete();
-}
 }
