@@ -12,7 +12,6 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.dspace.content.Bitstream;
 import org.dspace.content.Bundle;
 import org.dspace.content.DSpaceObject;
 import org.dspace.content.Item;
@@ -20,6 +19,16 @@ import org.dspace.core.Context;
 import org.dspace.curate.AbstractCurationTask;
 import org.dspace.curate.Curator;
 import org.dspace.curate.Distributive;
+import org.dspace.storage.bitstore.BitstreamStorageManager;
+import org.dspace.storage.rdbms.DatabaseManager;
+import org.dspace.storage.rdbms.TableRow;
+import org.dspace.storage.rdbms.TableRowIterator;
+
+/* TODO: Create curation task to purge files marked for deletion? (needs to happen 1 hr after files are marked)
+    import org.dspace.storage.bitstore.BitstreamStorageManager;
+    deleteDbRecords = true;
+    verbose = true;
+    cleanup( deleteDbRecords, verbose)*/
 
 /**
  * DataMigration is a task that migrates bitstreams scattered across multiple
@@ -46,31 +55,37 @@ public class DataMigration extends AbstractCurationTask
     @Override
     protected void performItem(Item item) throws SQLException, IOException
     {
-        Context context = new Context();
+        
         for (Bundle bundle : item.getBundles())
         {
             for (Bitstream bs : bundle.getBitstreams())
             {
                 // If this bitstream's stored location doesn't match the set storage location, then migrate
                 if ( bs.getStoreNumber() != 1 ) {
-                    
-                    // Retrieve the bits from the old bitstream and create a new copy of the bitstream.
-                    bs.create( context, bs.retrieve() );
 
-                    // Mark the old bitstream for deletion.
-                    bs.delete();
+                    migrateBitstreamData( bs );
+
                 }
                 else {
                     // Do nothing
                 }
             }           
         }
-        c.complete();
-        /* Separate curation task? 
-        // Delete bitstream from asset store (needs to happen after 1 hr)
-        import org.dspace.storage.bitstore.BitstreamStorageManager;
-        deleteDbRecords = true;
-        verbose = true;
-        cleanup( deleteDbRecords, verbose)*/
+        
     }
+
+    private void migrateBitstreamData(Bitstream bs) throws SQLException, IOException
+    {
+        Context context = new Context();
+
+        // Creating new copy of bitstream.
+        int oldID = bs.getID()
+        int newID = BitstreamStorageManager.store( 
+            context, BitstreamStorageManager.retrieve( context, oldID ) );
+
+        // Delete old bitsream
+        BitstreamStorageManager.delete(context, oldID);
+
+        context.complete();
+}
 }
