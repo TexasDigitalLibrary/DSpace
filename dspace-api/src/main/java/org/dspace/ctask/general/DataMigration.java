@@ -59,16 +59,12 @@ public class DataMigration extends AbstractCurationTask
             {
                 
                 // Get the current asset store location used by dspace (defined in dspace.cfg). Set to default (0) if not found.
-                String dspaceStoreNumberString = ConfigurationManager.getProperty("assetstore.incoming");
-                int dspaceStoreNumber = 0; // Default asset store location
-                if ( dspaceStoreNumberString != null ) {
-                    dspaceStoreNumber = Integer.parseInt(dspaceStoreNumberString);
-                }
+                int dspaceStoreNumber = ConfigurationManager.getIntProperty("assetstore.incoming");
 
                 // Only migrate bitstreams that are not stored in the current dspace asset store location and have not been marked for deletion.
                 if ( bitstream.getStoreNumber() != dspaceStoreNumber && bitstream.isDeleted() != true ) {
 
-                    // Create new bitstream object in the current dspace asset store location, and create new bitstream in DB.
+                    // Create new bitstream object in the current dspace asset store location.
                     try{
                         Bitstream newBitstream = bundle.createBitstream( bitstream.retrieve() );    
                     }
@@ -77,6 +73,14 @@ public class DataMigration extends AbstractCurationTask
                         log.error("Authorization error while attempting to create bitstream from ID "+bitstream.getID()+". ", ae);
                     }
                     
+                    // Register bitstream in the database.
+                    try{
+                        bundle.registerBitstream( bitstream.getStoreNumber(), bitstream.getSource() );
+                    }
+                    catch ( AuthorizeException ae ) {
+                        // TODO: Surface authorization error to the UI so the user can become aware.
+                        log.error("Authorization error while attempting to register bitstream with ID "+bitstream.getID()+". ", ae);
+                    }
 
                     // Mark old bitsream for deletion.
                     try{
