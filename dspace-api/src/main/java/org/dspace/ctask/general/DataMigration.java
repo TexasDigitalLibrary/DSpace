@@ -92,8 +92,14 @@ public class DataMigration extends AbstractCurationTask
                     // Set Source
                     newBitstream.setSource( bitstream.getSource() );
 
-                    // Apply changes to metadata
-                    newBitstream.update();
+                    // Update bitstream with metadata changes
+                    try{
+                        newBitstream.update();
+                    }
+                    catch ( AuthorizeException ae ) {
+                        // TODO: Surface authorization error to the UI so the user can become aware.
+                        log.error("Authorization error while attempting to update bitstream from ID "+bitstream.getID()+". ", ae);
+                    }
 
                     /* Register bitstream in the database.
                     try{
