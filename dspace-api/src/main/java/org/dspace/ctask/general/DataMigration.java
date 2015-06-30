@@ -57,7 +57,7 @@ public class DataMigration extends AbstractCurationTask
         {
             for ( Bitstream bitstream : bundle.getBitstreams() )
             {
-                Bitstream newBitstream = null;
+                Bitstream newBitstream;
                 
                 // Get the current asset store location used by dspace (defined in dspace.cfg). Set to default (0) if not found.
                 int dspaceStoreNumber = ConfigurationManager.getIntProperty("assetstore.incoming");
