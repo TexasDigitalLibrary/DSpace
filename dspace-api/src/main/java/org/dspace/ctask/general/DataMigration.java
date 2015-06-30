@@ -73,14 +73,35 @@ public class DataMigration extends AbstractCurationTask
                         log.error("Authorization error while attempting to create bitstream from ID "+bitstream.getID()+". ", ae);
                     }
                     
-                    // Register bitstream in the database.
+                    // Set Format
+                    newBitstream.setFormat( bitstream.getFormat() );
+
+                    // Set User Format Description
+                    newBitstream.setUserFormatDescription( bitstream.getUserFormatDescription() );
+
+                    // Set Name
+                    newBitstream.setName( bitstream.getName() );
+
+                    // Set Description
+                    newBitstream.setDescription( bitstream.getDescription() );
+
+                    // Set Sequence ID
+                    newBitstream.setSequenceID( bitstream.getSequenceID );
+
+                    // Set Source
+                    newBitstream.setSource( bitstream.getSource() );
+
+                    // Apply changes to metadata
+                    newBitstream.update();
+
+                    /* Register bitstream in the database.
                     try{
                         bundle.registerBitstream( bitstream.getStoreNumber(), bitstream.getSource() );
                     }
                     catch ( AuthorizeException ae ) {
                         // TODO: Surface authorization error to the UI so the user can become aware.
                         log.error("Authorization error while attempting to register bitstream with ID "+bitstream.getID()+". ", ae);
-                    }
+                    }*/
 
                     // Mark old bitsream for deletion.
                     try{
