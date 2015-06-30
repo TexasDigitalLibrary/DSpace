@@ -56,14 +56,14 @@ public class DataMigration extends AbstractCurationTask
         for ( Bundle bundle : item.getBundles() )
         {
             for ( Bitstream bitstream : bundle.getBitstreams() )
-            {
-                Bitstream newBitstream;
-                
+            {   
                 // Get the current asset store location used by dspace (defined in dspace.cfg). Set to default (0) if not found.
                 int dspaceStoreNumber = ConfigurationManager.getIntProperty("assetstore.incoming");
 
                 // Only migrate bitstreams that are not stored in the current dspace asset store location and have not been marked for deletion.
                 if ( bitstream.getStoreNumber() != dspaceStoreNumber && bitstream.isDeleted() != true ) {
+
+                    Bitstream newBitstream = null;
 
                     // Create new bitstream object in the current dspace asset store location.
                     try{
@@ -73,54 +73,58 @@ public class DataMigration extends AbstractCurationTask
                         // TODO: Surface authorization error to the UI so the user can become aware.
                         log.error("Authorization error while attempting to create bitstream from ID "+bitstream.getID()+". ", ae);
                     }
+
+                    if ( newBitstream != null ) {
                     
-                    // Set Format
-                    newBitstream.setFormat( bitstream.getFormat() );
+                        // Set Format
+                        newBitstream.setFormat( bitstream.getFormat() );
 
-                    // Set User Format Description
-                    newBitstream.setUserFormatDescription( bitstream.getUserFormatDescription() );
+                        // Set User Format Description
+                        newBitstream.setUserFormatDescription( bitstream.getUserFormatDescription() );
 
-                    // Set Name
-                    newBitstream.setName( bitstream.getName() );
+                        // Set Name
+                        newBitstream.setName( bitstream.getName() );
 
-                    // Set Description
-                    newBitstream.setDescription( bitstream.getDescription() );
+                        // Set Description
+                        newBitstream.setDescription( bitstream.getDescription() );
 
-                    // Set Sequence ID
-                    newBitstream.setSequenceID( bitstream.getSequenceID() );
+                        // Set Sequence ID
+                        newBitstream.setSequenceID( bitstream.getSequenceID() );
 
-                    // Set Source
-                    newBitstream.setSource( bitstream.getSource() );
+                        // Set Source
+                        newBitstream.setSource( bitstream.getSource() );
 
-                    // Update bitstream with metadata changes
-                    try{
-                        newBitstream.update();
+                        // Update bitstream with metadata changes
+                        try{
+                            newBitstream.update();
+                        }
+                        catch ( AuthorizeException ae ) {
+                            // TODO: Surface authorization error to the UI so the user can become aware.
+                            log.error("Authorization error while attempting to update bitstream from ID "+bitstream.getID()+". ", ae);
+                        }
+
+                        /* Register bitstream in the database.
+                        try{
+                            bundle.registerBitstream( bitstream.getStoreNumber(), bitstream.getSource() );
+                        }
+                        catch ( AuthorizeException ae ) {
+                            // TODO: Surface authorization error to the UI so the user can become aware.
+                            log.error("Authorization error while attempting to register bitstream with ID "+bitstream.getID()+". ", ae);
+                        }*/
+
+                        // Mark old bitsream for deletion.
+                        try{
+                            bundle.removeBitstream( bitstream );
+                        }
+                        catch ( AuthorizeException ae ) {
+                            // TODO: Surface authorization error to the UI so the user can become aware.
+                            log.error("Authorization error while attempting to delete bitstream with ID "+bitstream.getID()+". ", ae);
+                        }
+                    } else {
+                    // Do nothing if the new bitstream failed to instantiate.
                     }
-                    catch ( AuthorizeException ae ) {
-                        // TODO: Surface authorization error to the UI so the user can become aware.
-                        log.error("Authorization error while attempting to update bitstream from ID "+bitstream.getID()+". ", ae);
-                    }
 
-                    /* Register bitstream in the database.
-                    try{
-                        bundle.registerBitstream( bitstream.getStoreNumber(), bitstream.getSource() );
-                    }
-                    catch ( AuthorizeException ae ) {
-                        // TODO: Surface authorization error to the UI so the user can become aware.
-                        log.error("Authorization error while attempting to register bitstream with ID "+bitstream.getID()+". ", ae);
-                    }*/
-
-                    // Mark old bitsream for deletion.
-                    try{
-                        bundle.removeBitstream( bitstream );
-                    }
-                    catch ( AuthorizeException ae ) {
-                        // TODO: Surface authorization error to the UI so the user can become aware.
-                        log.error("Authorization error while attempting to delete bitstream with ID "+bitstream.getID()+". ", ae);
-                    }
-
-                }
-                else {
+                } else {
                     // Do nothing if the bitstream is already in the current dspace asset store location.
                 }
             }           
