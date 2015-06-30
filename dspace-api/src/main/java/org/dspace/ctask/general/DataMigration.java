@@ -57,6 +57,7 @@ public class DataMigration extends AbstractCurationTask
         {
             for ( Bitstream bitstream : bundle.getBitstreams() )
             {
+                Bitstream newBitstream = null;
                 
                 // Get the current asset store location used by dspace (defined in dspace.cfg). Set to default (0) if not found.
                 int dspaceStoreNumber = ConfigurationManager.getIntProperty("assetstore.incoming");
@@ -66,7 +67,7 @@ public class DataMigration extends AbstractCurationTask
 
                     // Create new bitstream object in the current dspace asset store location.
                     try{
-                        Bitstream newBitstream = bundle.createBitstream( bitstream.retrieve() );    
+                        newBitstream = bundle.createBitstream( bitstream.retrieve() );    
                     }
                     catch ( AuthorizeException ae ) {
                         // TODO: Surface authorization error to the UI so the user can become aware.
