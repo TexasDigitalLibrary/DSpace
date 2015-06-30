@@ -87,7 +87,7 @@ public class DataMigration extends AbstractCurationTask
                     newBitstream.setDescription( bitstream.getDescription() );
 
                     // Set Sequence ID
-                    newBitstream.setSequenceID( bitstream.getSequenceID );
+                    newBitstream.setSequenceID( bitstream.getSequenceID() );
 
                     // Set Source
                     newBitstream.setSource( bitstream.getSource() );
