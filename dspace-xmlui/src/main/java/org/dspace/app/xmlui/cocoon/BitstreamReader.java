@@ -84,7 +84,7 @@ import org.dspace.core.LogManager;
  *  &lt;/map:read&gt;
  *
  *  Again when no handle is available you can also access it
- *  via an internal itemID & name.
+ *  via an internal itemID & name. 
  *
  *  /html/id/{itemID}/{name}
  *
@@ -113,11 +113,16 @@ public class BitstreamReader extends AbstractReader implements Recyclable
     private static final String AUTH_REQUIRED_HEADER = "xmlui.BitstreamReader.auth_header";
     private static final String AUTH_REQUIRED_MESSAGE = "xmlui.BitstreamReader.auth_message";
         
+    
     /**
      * How big a buffer should we use when reading from the bitstream before
      * writing to the HTTP response?
      */
-    protected static final int BUFFER_SIZE = 8192;
+    protected static final int BUFFER_SIZE = 8192;            
+
+    /** Allocate memory for the buffer **/
+    protected byte[] bufferArray = new byte[ BUFFER_SIZE ];
+
 
     /**
      * When should a bitstream expire in milliseconds. This should be set to
@@ -302,8 +307,8 @@ public class BitstreamReader extends AbstractReader implements Recyclable
                         return;
                 }
                 else{
-                	if(ConfigurationManager.getProperty("request.item.type")==null||
-                			                			ConfigurationManager.getProperty("request.item.type").equalsIgnoreCase("logged")){
+                    if(ConfigurationManager.getProperty("request.item.type")==null||
+                                                        ConfigurationManager.getProperty("request.item.type").equalsIgnoreCase("logged")){
                         // The user does not have read access to this bitstream. Interrupt this current request
                         // and then forward them to the login page so that they can be authenticated. Once that is
                         // successful, their request will be resumed.
@@ -316,7 +321,7 @@ public class BitstreamReader extends AbstractReader implements Recyclable
                         objectModel.get(HttpEnvironment.HTTP_RESPONSE_OBJECT);
                         httpResponse.sendRedirect(redictURL);
                         return;
-                	}
+                    }
                 }
             }
 
@@ -419,7 +424,7 @@ public class BitstreamReader extends AbstractReader implements Recyclable
             
             // If we created the database connection close it, otherwise leave it open.
             if (BitstreamReaderOpenedContext)
-            	context.complete();
+                context.complete();
         }
         catch (SQLException sqle)
         {
@@ -600,136 +605,168 @@ public class BitstreamReader extends AbstractReader implements Recyclable
             throw new ProcessingException(e);
         }
 
-        byte[] buffer = new byte[BUFFER_SIZE];
-        int length = -1;
-
         // Only encourage caching if this is not a restricted resource, i.e.
         // if it is accessed anonymously or is readable by Anonymous:
         if (isAnonymouslyReadable)
         {
             response.setDateHeader("Expires", System.currentTimeMillis() + expires);
         }
+
+
+
+        // NOTE: HTTP 206 code below MIGHT have a bug when downloading PDF.
         
-        // If this is a large bitstream then tell the browser it should treat it as a download.
-        int threshold = ConfigurationManager.getIntProperty("xmlui.content_disposition_threshold");
-        if (bitstreamSize > threshold && threshold != 0)
-        {
-                String name  = bitstreamName;
-                
-                // Try and make the download file name formatted for each browser.
-                try {
-                        String agent = request.getHeader("USER-AGENT");
-                        if (agent != null && agent.contains("MSIE"))
-                        {
-                            name = URLEncoder.encode(name, "UTF8");
-                        }
-                        else if (agent != null && agent.contains("Mozilla"))
-                        {
-                            name = MimeUtility.encodeText(name, "UTF8", "B");
-                        }
-                }
-                catch (UnsupportedEncodingException see)
-                {
-                        // do nothing
-                }
-                response.setHeader("Content-Disposition", "attachment;filename=" + '"' + name + '"');
-        }
+        // Instantiate variables used to construct response
+        String responseType = "HTTP_200";
+        boolean continueReading = true;
+        long fileSize = 0;
+        long rangeSize = 0;
+        long rangeStart = 0;
+        long rangeEnd = 0;
 
-        ByteRange byteRange = null;
+        // Reuse existing buffer
+        int bufferSize = BUFFER_SIZE;
+        //if( bufferSize > 1000000 ) { bufferSize = 1000000; } // 1MB cap
+        //if( bufferSize == 0 ) { /* Nothing will be sent to client */ }
+        //if( bufferSize < 0 ) { throw new NumberFormatException(); }
+        byte[] buffer = this.bufferArray;
+        
 
-        // Turn off partial downloads, they cause problems
-        // and are only rarely used. Specifically some windows pdf
-        // viewers are incapable of handling this request. You can
-        // uncomment the following lines to turn this feature back on.
+        // Connection type sent via req header
+        String connection = request.getHeader("Connection").toLowerCase();
 
-//        response.setHeader("Accept-Ranges", "bytes");
-//        String ranges = request.getHeader("Range");
-//        if (ranges != null)
-//        {
-//            try
-//            {
-//                ranges = ranges.substring(ranges.indexOf('=') + 1);
-//                byteRange = new ByteRange(ranges);
-//            }
-//            catch (NumberFormatException e)
-//            {
-//                byteRange = null;
-//                if (response instanceof HttpResponse)
-//                {
-//                    // Respond with status 416 (Request range not
-//                    // satisfiable)
-//                    response.setStatus(416);
-//                }
-//            }
-//        }
+        // Get ranges from header
+        String ranges = request.getHeader("Range");
+        String[] rangesTuple = new String[ 2 ];
 
+        // Setup vars and validate
         try
         {
-            if (byteRange != null)
-            {
-                String entityLength;
-                String entityRange;
-                if (this.bitstreamSize != -1)
-                {
-                    entityLength = "" + this.bitstreamSize;
-                    entityRange = byteRange.intersection(
-                            new ByteRange(0, this.bitstreamSize)).toString();
-                }
-                else
-                {
-                    entityLength = "*";
-                    entityRange = byteRange.toString();
-                }
+            // Setup File Size
+            fileSize = this.bitstreamSize;
+            
+            // Setup Range Start
+            if( ranges != null ) {
+                // If req gives a range, then res should be HTTP 206
+                responseType = "HTTP_206";
 
-                response.setHeader("Content-Range", entityRange + "/" + entityLength);
-                if (response instanceof HttpResponse)
-                {
-                    // Response with status 206 (Partial content)
-                    response.setStatus(206);
-                }
+                // Setup Range Start
+                ranges = ranges.substring(ranges.indexOf('=') + 1);
+                rangesTuple = ranges.split("-", 2);
+                rangeStart = Long.parseLong(rangesTuple[0]);
+                if( rangeStart >= fileSize ) { /* Nothing will be sent to client */ }
+                if( rangeStart < 0) { throw new NumberFormatException(); }
 
-                int pos = 0;
-                int posEnd;
-                while ((length = this.bitstreamInputStream.read(buffer)) > -1)
-                {
-                    posEnd = pos + length - 1;
-                    ByteRange intersection = byteRange.intersection(new ByteRange(pos, posEnd));
-                    if (intersection != null)
-                    {
-                        out.write(buffer, (int) intersection.getStart() - pos, (int) intersection.length());
-                    }
-                    pos += length;
-                }
+                // Setup Range End (Ignore rangeEnd given in req, and always set to fileSize)
+                rangeEnd = fileSize; //Integer.parseInt(rangesTuple[1]);
+                //if( rangeEnd > fileSize || rangeEnd == null) { rangeEnd = fileSize; }
+                //if( rangeEnd == 0 ) { /* Nothing will be sent to client */}
+                //if( rangeEnd < 0 ) { throw new NumberFormatException(); }
+            } else {
+                // If req gives no range, then res should be HTTP 200
+                responseType = "HTTP_200";
+                rangeStart = 0;
+                rangeEnd = fileSize;
             }
-            else
-            {
-                response.setHeader("Content-Length", String.valueOf(this.bitstreamSize));
+            
+            // Setup Range Size
+            if( rangeStart > rangeEnd) { throw new NumberFormatException(); }
+            rangeSize = rangeEnd-rangeStart;
+        }
+        catch (NumberFormatException e)
+        {
+            responseType = "HTTP_416";
+        }
 
-                while ((length = this.bitstreamInputStream.read(buffer)) > -1)
-                {
-                    out.write(buffer, 0, length);
-                }
-                out.flush();
+
+
+        // Set the type of HTTP response
+        if (response instanceof HttpResponse)
+        {    
+            switch(responseType) 
+            {
+                case "HTTP_206" : response.setStatus(206); break; // Partial content
+                case "HTTP_416" : response.setStatus(416); break; // Request range not satisfiable
+                default : response.setStatus(200); break; // OK
             }
         }
-        finally
+
+
+
+        // Construct the response header
+        response.setHeader("Accept-Ranges", "bytes");
+        response.setHeader("Content-Length", ""+rangeSize );
+        if ( responseType.equals("HTTP_200") ){
+            String name = bitstreamName;
+            try {
+                String agent = request.getHeader("USER-AGENT");
+                if (agent != null && agent.contains("MSIE")) {
+                    name = URLEncoder.encode(name, "UTF8");
+                }
+                else if ( agent != null && agent.contains("Mozilla") ) {
+                    name = MimeUtility.encodeText(name, "UTF8", "B");
+                }
+            }
+            catch (UnsupportedEncodingException see) { /* Do Nothing*/ }
+            response.setHeader("Content-Disposition", "attachment;filename=" + '"' + name + '"');
+        }
+        if ( responseType.equals("HTTP_206") ) { // NOTE: Browser might expect (rangeEnd - 1)!
+            response.setHeader("Content-Range", "bytes " + rangeStart + "-" + (rangeEnd-1) + "/" + fileSize);
+            if (connection.equals("keep-alive")) { response.setHeader("Connection", "keep-alive"); }
+        }
+        if ( responseType.equals("HTTP_416") ) {
+            response.setHeader("Content-Range", "bytes " + "*" + "/" + "*");
+        }
+
+
+
+        // Copy existing input stream mem location to var "in" for readability.
+        InputStream in = this.bitstreamInputStream;
+        try
         {
-            try
-            {
+            // Set input stream starting location
+            in.skip(rangeStart);
+
+            // Prepare first buffer
+            bufferSize = in.read(buffer);
+
+            // Transmit buffered data until we hit
+            // end-of-file or rangeEnd
+            while ( bufferSize > 0 ) {
+
+                if ((rangeStart + (long)bufferSize) > rangeEnd) {
+                    bufferSize = (int)(rangeEnd - rangeStart);
+                    continueReading = false;
+                } else {
+                    rangeStart += bufferSize;
+                }
+
+                // Send buffered content to client
+                out.write(buffer, 0, bufferSize);
+
+                // Prepare next buffer
+                if ( continueReading ) {
+                    bufferSize = in.read(buffer);
+                } else {
+                    bufferSize = -1;
+                }
+            }
+            out.flush();
+        }
+        finally {
+            try {
                 // Close the bitstream input stream so that we don't leak a file descriptor
-                this.bitstreamInputStream.close();
-                
-                // Close the output stream as per Cocoon docs: http://cocoon.apache.org/2.2/core-modules/core/2.2/681_1_1.html
-                out.close();
-            } 
-            catch (IOException ioe)
-            {
+                if (in != null) { in.close(); }
+                // Close the output stream as per Cocoon docs:
+                // http://cocoon.apache.org/2.2/core-modules/core/2.2/681_1_1.html
+                if (out != null) { out.close(); }
+            }
+            catch (IOException ioe) {
                 // Closing the stream threw an IOException but do we want this to propagate up to Cocoon?
                 // No point since the user has already got the bitstream contents.
                 log.warn("Caught IO exception when closing a stream: " + ioe.getMessage());
             }
         }
-
     }
 
     /**
@@ -750,6 +787,4 @@ public class BitstreamReader extends AbstractReader implements Recyclable
         this.bitstreamSize = 0;
         this.bitstreamMimeType = null;
     }
-
-
 }

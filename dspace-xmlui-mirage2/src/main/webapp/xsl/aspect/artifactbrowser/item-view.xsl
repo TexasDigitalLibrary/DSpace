@@ -108,14 +108,8 @@
             <xsl:call-template name="itemSummaryView-DIM-title"/>
             <div class="row">
                 <div class="col-sm-4">
-                    <div class="row">
-                        <div class="col-xs-6 col-sm-12">
-                            <xsl:call-template name="itemSummaryView-DIM-thumbnail"/>
-                        </div>
-                        <div class="col-xs-6 col-sm-12">
-                            <xsl:call-template name="itemSummaryView-DIM-file-section"/>
-                        </div>
-                    </div>
+                    <xsl:call-template name="itemSummaryView-DIM-thumbnail"/>
+                    <xsl:call-template name="itemSummaryView-DIM-file-section"/>
                     <xsl:call-template name="itemSummaryView-DIM-date"/>
                     <xsl:call-template name="itemSummaryView-DIM-authors"/>
                     <xsl:if test="$ds_item_view_toggle_url != ''">
@@ -167,6 +161,11 @@
 
     <xsl:template name="itemSummaryView-DIM-thumbnail">
         <div class="thumbnail">
+            
+            <xsl:variable name="title">
+	    <xsl:value-of select="//mets:FLocat[@LOCTYPE='URL']/@xlink:title"/>
+            </xsl:variable>
+
             <xsl:choose>
                 <xsl:when test="//mets:fileSec/mets:fileGrp[@USE='THUMBNAIL']">
                     <xsl:variable name="src">
@@ -176,16 +175,92 @@
                                         select="/mets:METS/mets:fileSec/mets:fileGrp[@USE='THUMBNAIL']/mets:file[@GROUPID=../../mets:fileGrp[@USE='CONTENT']/mets:file[@GROUPID=../../mets:fileGrp[@USE='THUMBNAIL']/mets:file/@GROUPID][1]/@GROUPID]/mets:FLocat[@LOCTYPE='URL']/@xlink:href"/>
                             </xsl:when>
                             <xsl:otherwise>
-                                <xsl:value-of
-                                        select="//mets:fileSec/mets:fileGrp[@USE='THUMBNAIL']/mets:file/mets:FLocat[@LOCTYPE='URL']/@xlink:href"/>
+                                <xsl:value-of select="//mets:fileSec/mets:fileGrp[@USE='THUMBNAIL']/mets:file/mets:FLocat[@LOCTYPE='URL']/@xlink:href"/>
                             </xsl:otherwise>
                         </xsl:choose>
                     </xsl:variable>
-                    <img alt="Thumbnail">
-                        <xsl:attribute name="src">
-                            <xsl:value-of select="$src"/>
-                        </xsl:attribute>
-                    </img>
+                    <img alt="Thumbnail"><xsl:attribute name="src"><xsl:value-of select="$src"/></xsl:attribute></img>
+                </xsl:when>
+                <xsl:when test="contains($title,'.3g2') or contains($title,'.3gp') or contains($title,'.asf') or contains($title,'.avi') or contains($title,'.drc') or contains($title,'.flv') or contains($title,'.m4v') or contains($title,'.mkv') or contains($title,'.mng') or contains($title,'.mov') or contains($title,'.qt') or contains($title,'.mp4') or contains($title,'.m4p') or contains($title,'.m4v') or contains($title,'.mp2') or contains($title,'.mpe') or contains($title,'.mpv') or contains($title,'.mpg') or contains($title,'.mpeg') or contains($title,'.m2v') or contains($title,'.mxf') or contains($title,'.nsv') or contains($title,'.ogg') or contains($title,'.ogv') or contains($title,'.rm') or contains($title,'.rmvb') or contains($title,'.roq') or contains($title,'.svi') or contains($title,'.vob') or contains($title,'.webm') or contains($title,'.wmv') or contains($title,'.yuv')">
+                    <xsl:variable name="src">
+                    <xsl:value-of select="substring-before(//mets:FLocat[@LOCTYPE='URL']/@xlink:href,'?')"/>
+                    </xsl:variable>
+                        <xsl:choose>
+                            <xsl:when test="contains($title,'.3g2') or contains($title,'.3gp') or contains($title,'.asf') or contains($title,'.avi') or contains($title,'.m4v') or contains($title,'.mov') or contains($title,'.qt') or contains($title,'.mp4') or contains($title,'.m4p') or contains($title,'.m4v') or contains($title,'.mpg') or contains($title,'.mpeg') or contains($title,'.m2v') or contains($title,'.vob') ">
+                                <xsl:variable name="type" select="string('video/mp4')"/>
+                                <xsl:call-template name="video">
+                                    <xsl:with-param name="src" select="$src"/>
+                                    <xsl:with-param name="type" select="$type"/>
+                                </xsl:call-template>
+                            </xsl:when>
+                            <xsl:when test="contains($title,'.ogg') or contains($title,'.ogv')">
+                                <xsl:variable name="type" select="string('video/ogg')"/>
+                                <xsl:call-template name="video">
+                                    <xsl:with-param name="src" select="$src"/>
+                                    <xsl:with-param name="type" select="$type"/>
+                                </xsl:call-template>
+                            </xsl:when>
+                            <xsl:when test="contains($title,'.webm')">
+                                <xsl:variable name="type" select="string('video/webm')"/>
+                                <xsl:call-template name="video">
+                                    <xsl:with-param name="src" select="$src"/>
+                                    <xsl:with-param name="type" select="$type"/>
+                                </xsl:call-template>
+                            </xsl:when>
+                            <xsl:otherwise>
+                                <img alt="Thumbnail">
+                                    <xsl:attribute name="data-src">
+                                        <xsl:text>holder.js/100%x</xsl:text>
+                                        <xsl:value-of select="$thumbnail.maxheight"/>
+                                        <xsl:text>/text:No Thumbnail</xsl:text>
+                                    </xsl:attribute>
+                                </img>
+                            </xsl:otherwise>
+                        </xsl:choose>
+                </xsl:when>
+                <xsl:when test="contains($title,'.act') or contains($title,'.aiff') or contains($title,'.aac') or contains($title,'.amr') or contains($title,'.ape') or contains($title,'.au') or contains($title,'.awb') or contains($title,'.dct') or contains($title,'.dss') or contains($title,'.dvf') or contains($title,'.flac') or contains($title,'.gsm') or contains($title,'.iklax') or contains($title,'.ivs') or contains($title,'.m4a') or contains($title,'.mmf') or contains($title,'.mp3') or contains($title,'.mpc') or contains($title,'.msv') or contains($title,'.oga') or contains($title,'.opus') or contains($title,'.ra') or contains($title,'.raw') or contains($title,'.sln') or contains($title,'.tta') or contains($title,'.vox') or contains($title,'.wav') or contains($title,'.wave') or contains($title,'.wma') or contains($title,'.wv') or contains($title,'.weba')">
+                    <xsl:variable name="src">
+                    <xsl:value-of select="substring-before(//mets:FLocat[@LOCTYPE='URL']/@xlink:href,'?')"/>
+                    </xsl:variable>
+                        <xsl:choose>
+                            <xsl:when test="contains($title,'.weba')">
+                                <xsl:variable name="type" select="string('audio/webm')"/>
+                                <xsl:call-template name="audio">
+                                    <xsl:with-param name="src" select="$src"/>
+                                    <xsl:with-param name="type" select="$type"/>
+                                </xsl:call-template>
+                            </xsl:when>
+                            <xsl:when test="contains($title,'.mp3')">
+                                <xsl:variable name="type" select="string('audio/mpeg')"/>
+                                <xsl:call-template name="audio">
+                                    <xsl:with-param name="src" select="$src"/>
+                                    <xsl:with-param name="type" select="$type"/>
+                                </xsl:call-template>
+                            </xsl:when>
+                            <xsl:when test="contains($title,'.oga') or contains($title,'.opus')">
+                                <xsl:variable name="type" select="string('audio/ogg')"/>
+                                <xsl:call-template name="audio">
+                                    <xsl:with-param name="src" select="$src"/>
+                                    <xsl:with-param name="type" select="$type"/>
+                                </xsl:call-template>
+                            </xsl:when>
+                            <xsl:when test="contains($title,'.wav') or contains($title,'.wave')">
+                                <xsl:variable name="type" select="string('audio/wav')"/>
+                                <xsl:call-template name="audio">
+                                    <xsl:with-param name="src" select="$src"/>
+                                    <xsl:with-param name="type" select="$type"/>
+                                </xsl:call-template>
+                            </xsl:when>
+                            <xsl:otherwise>
+                                <img alt="Thumbnail">
+                                    <xsl:attribute name="data-src">
+                                        <xsl:text>holder.js/100%x</xsl:text>
+                                        <xsl:value-of select="$thumbnail.maxheight"/>
+                                        <xsl:text>/text:No Thumbnail</xsl:text>
+                                    </xsl:attribute>
+                                </img>
+                            </xsl:otherwise>
+                        </xsl:choose>
                 </xsl:when>
                 <xsl:otherwise>
                     <img alt="Thumbnail">
@@ -198,6 +273,30 @@
                 </xsl:otherwise>
             </xsl:choose>
         </div>
+    </xsl:template>
+
+    <!-- General Video Template -->
+    <xsl:template name="video">
+        <xsl:param name="src"/>
+        <xsl:param name="type"/>
+        <video width="256" controls="">
+            <source>
+                <xsl:attribute name="src"><xsl:value-of select="$src"/></xsl:attribute>
+                <xsl:attribute name="type"><xsl:value-of select="$type"/></xsl:attribute>
+            </source>
+        </video>
+    </xsl:template>
+
+    <!-- General Audio Template -->
+    <xsl:template name="audio">
+        <xsl:param name="src"/>
+        <xsl:param name="type"/>
+        <audio controls="">
+            <source>
+                <xsl:attribute name="src"><xsl:value-of select="$src"/></xsl:attribute>
+                <xsl:attribute name="type"><xsl:value-of select="$type"/></xsl:attribute>
+            </source>
+        </audio>
     </xsl:template>
 
     <xsl:template name="itemSummaryView-DIM-abstract">
@@ -526,22 +625,49 @@
 
     <xsl:template match="mets:file">
         <xsl:param name="context" select="."/>
+        <hr/>
         <div class="file-wrapper row">
-            <div class="col-xs-6 col-sm-3">
-                <div class="thumbnail">
-                    <a class="image-link">
-                        <xsl:attribute name="href">
-                            <xsl:value-of select="mets:FLocat[@LOCTYPE='URL']/@xlink:href"/>
-                        </xsl:attribute>
-                        <xsl:choose>
-                            <xsl:when test="$context/mets:fileSec/mets:fileGrp[@USE='THUMBNAIL']/
-                        mets:file[@GROUPID=current()/@GROUPID]">
-                                <img alt="Thumbnail">
-                                    <xsl:attribute name="src">
-                                        <xsl:value-of select="$context/mets:fileSec/mets:fileGrp[@USE='THUMBNAIL']/
+            <div class="col-sm-4">
+
+           <div class="thumbnail">
+
+            <xsl:variable name="title">
+            <xsl:value-of select="mets:FLocat[@LOCTYPE='URL']/@xlink:title"/>
+            </xsl:variable>
+
+            <xsl:choose>
+                <xsl:when test="$context/mets:fileSec/mets:fileGrp[@USE='THUMBNAIL']/mets:file[@GROUPID=current()/@GROUPID]">
+                    <xsl:variable name="src">
+                                <xsl:value-of select="$context/mets:fileSec/mets:fileGrp[@USE='THUMBNAIL']/
                                     mets:file[@GROUPID=current()/@GROUPID]/mets:FLocat[@LOCTYPE='URL']/@xlink:href"/>
-                                    </xsl:attribute>
-                                </img>
+                    </xsl:variable>
+                    <img alt="Thumbnail"><xsl:attribute name="src"><xsl:value-of select="$src"/></xsl:attribute></img>
+                </xsl:when>
+                <xsl:when test="contains($title,'.3g2') or contains($title,'.3gp') or contains($title,'.asf') or contains($title,'.avi') or contains($title,'.drc') or contains($title,'.flv') or contains($title,'.m4v') or contains($title,'.mkv') or contains($title,'.mng') or contains($title,'.mov') or contains($title,'.qt') or contains($title,'.mp4') or contains($title,'.m4p') or contains($title,'.m4v') or contains($title,'.mp2') or contains($title,'.mpe') or contains($title,'.mpv') or contains($title,'.mpg') or contains($title,'.mpeg') or contains($title,'.m2v') or contains($title,'.mxf') or contains($title,'.nsv') or contains($title,'.ogg') or contains($title,'.ogv') or contains($title,'.rm') or contains($title,'.rmvb') or contains($title,'.roq') or contains($title,'.svi') or contains($title,'.vob') or contains($title,'.webm') or contains($title,'.wmv') or contains($title,'.yuv')">
+                    <xsl:variable name="src">
+                    <xsl:value-of select="substring-before(mets:FLocat[@LOCTYPE='URL']/@xlink:href,'?')"/>
+                    </xsl:variable>
+                        <xsl:choose>
+                            <xsl:when test="contains($title,'3g2') or contains($title,'3gp') or contains($title,'asf') or contains($title,'avi') or contains($title,'m4v') or contains($title,'mov') or contains($title,'qt') or contains($title,'mp4') or contains($title,'m4p') or contains($title,'m4v') or contains($title,'mpg') or contains($title,'mpeg') or contains($title,'m2v') or contains($title,'vob') ">
+                                <xsl:variable name="type" select="string('video/mp4')"/>
+                                <xsl:call-template name="video">
+                                    <xsl:with-param name="src" select="$src"/>
+                                    <xsl:with-param name="type" select="$type"/>
+                                </xsl:call-template>
+                            </xsl:when>
+                            <xsl:when test="contains($title,'ogg') or contains($title,'ogv')">
+                                <xsl:variable name="type" select="string('video/ogg')"/>
+                                <xsl:call-template name="video">
+                                    <xsl:with-param name="src" select="$src"/>
+                                    <xsl:with-param name="type" select="$type"/>
+                                </xsl:call-template>
+                            </xsl:when>
+                            <xsl:when test="contains($title,'webm')">
+                                <xsl:variable name="type" select="string('video/webm')"/>
+                                <xsl:call-template name="video">
+                                    <xsl:with-param name="src" select="$src"/>
+                                    <xsl:with-param name="type" select="$type"/>
+                                </xsl:call-template>
                             </xsl:when>
                             <xsl:otherwise>
                                 <img alt="Thumbnail">
@@ -553,11 +679,66 @@
                                 </img>
                             </xsl:otherwise>
                         </xsl:choose>
-                    </a>
-                </div>
+                </xsl:when>
+                <xsl:when test="contains($title,'.act') or contains($title,'.aiff') or contains($title,'.aac') or contains($title,'.amr') or contains($title,'.ape') or contains($title,'.au') or contains($title,'.awb') or contains($title,'.dct') or contains($title,'.dss') or contains($title,'.dvf') or contains($title,'.flac') or contains($title,'.gsm') or contains($title,'.iklax') or contains($title,'.ivs') or contains($title,'.m4a') or contains($title,'.mmf') or contains($title,'.mp3') or contains($title,'.mpc') or contains($title,'.msv') or contains($title,'.oga') or contains($title,'.opus') or contains($title,'.ra') or contains($title,'.raw') or contains($title,'.sln') or contains($title,'.tta') or contains($title,'.vox') or contains($title,'.wav') or contains($title,'.wave') or contains($title,'.wma') or contains($title,'.wv') or contains($title,'.weba')">
+                    <xsl:variable name="src">
+                    <xsl:value-of select="substring-before(mets:FLocat[@LOCTYPE='URL']/@xlink:href,'?')"/>
+                    </xsl:variable>
+                        <xsl:choose>
+                            <xsl:when test="contains($title,'.weba')">
+                                <xsl:variable name="type" select="string('audio/webm')"/>
+                                <xsl:call-template name="audio">
+                                    <xsl:with-param name="src" select="$src"/>
+                                    <xsl:with-param name="type" select="$type"/>
+                                </xsl:call-template>
+                            </xsl:when>
+                            <xsl:when test="contains($title,'.mp3')">
+                                <xsl:variable name="type" select="string('audio/mpeg')"/>
+                                <xsl:call-template name="audio">
+                                    <xsl:with-param name="src" select="$src"/>
+                                    <xsl:with-param name="type" select="$type"/>
+                                </xsl:call-template>
+                            </xsl:when>
+                            <xsl:when test="contains($title,'.oga') or contains($title,'.opus')">
+                                <xsl:variable name="type" select="string('audio/ogg')"/>
+                                <xsl:call-template name="audio">
+                                    <xsl:with-param name="src" select="$src"/>
+                                    <xsl:with-param name="type" select="$type"/>
+                                </xsl:call-template>
+                            </xsl:when>
+                            <xsl:when test="contains($title,'.wav') or contains($title,'.wave')">
+                                <xsl:variable name="type" select="string('audio/wav')"/>
+                                <xsl:call-template name="audio">
+                                    <xsl:with-param name="src" select="$src"/>
+                                    <xsl:with-param name="type" select="$type"/>
+                                </xsl:call-template>
+                            </xsl:when>
+                            <xsl:otherwise>
+                                <img alt="Thumbnail">
+                                    <xsl:attribute name="data-src">
+                                        <xsl:text>holder.js/100%x</xsl:text>
+                                        <xsl:value-of select="$thumbnail.maxheight"/>
+                                        <xsl:text>/text:No Thumbnail</xsl:text>
+                                    </xsl:attribute>
+                                </img>
+                            </xsl:otherwise>
+                        </xsl:choose>
+                </xsl:when>
+                <xsl:otherwise>
+                    <img alt="Thumbnail">
+                        <xsl:attribute name="data-src">
+                            <xsl:text>holder.js/100%x</xsl:text>
+                            <xsl:value-of select="$thumbnail.maxheight"/>
+                            <xsl:text>/text:No Thumbnail</xsl:text>
+                        </xsl:attribute>
+                    </img>
+                </xsl:otherwise>
+            </xsl:choose>
+        </div>
+
             </div>
 
-            <div class="col-xs-6 col-sm-7">
+            <div class="col-sm-8">
                 <dl class="file-metadata dl-horizontal">
                     <dt>
                         <i18n:text>xmlui.dri2xhtml.METS-1.0.item-files-name</i18n:text>
@@ -632,18 +813,18 @@
                             <xsl:value-of select="util:shortenString(mets:FLocat[@LOCTYPE='URL']/@xlink:label, 30, 5)"/>
                         </dd>
                 </xsl:if>
-                </dl>
-            </div>
-
-            <div class="file-link col-xs-6 col-xs-offset-6 col-sm-2 col-sm-offset-0">
-                <xsl:choose>
-                    <xsl:when test="@ADMID">
-                        <xsl:call-template name="display-rights"/>
-                    </xsl:when>
-                    <xsl:otherwise>
-                        <xsl:call-template name="view-open"/>
-                    </xsl:otherwise>
-                </xsl:choose>
+			<dt></dt>
+			<dd>
+        	        <xsl:choose>
+	                    <xsl:when test="@ADMID">
+                	        <xsl:call-template name="display-rights"/>
+        	            </xsl:when>
+	                    <xsl:otherwise>
+                        	<xsl:call-template name="view-open"/>
+                    	</xsl:otherwise>
+			</xsl:choose>
+			</dd>
+		</dl>
             </div>
         </div>
 
