@@ -425,7 +425,7 @@
     <xsl:template name="audio">
         <xsl:param name="src"/>
         <xsl:param name="type"/>
-        <audio controls="">
+        <audio style="width: 256px;" controls="">
             <source>
                 <xsl:attribute name="src"><xsl:value-of select="$src"/></xsl:attribute>
                 <xsl:attribute name="type"><xsl:value-of select="$type"/></xsl:attribute>
