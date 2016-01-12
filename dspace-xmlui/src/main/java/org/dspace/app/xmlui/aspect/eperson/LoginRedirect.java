@@ -65,6 +65,7 @@ public class LoginRedirect extends AbstractAction {
                             "Multiple explicit authentication methods found when only one was expected.");
                 }
                 authMethod = currAuthMethod;
+                break;
             }
         }
 

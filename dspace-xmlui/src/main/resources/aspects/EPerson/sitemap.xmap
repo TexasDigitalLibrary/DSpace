@@ -129,6 +129,9 @@ registration, forgotten passwords, editing profiles, and changing passwords.
 			      <map:when test="1">
 			      	<map:act type="LoginRedirect" />  
 			      </map:when>
+			      <map:when test="2">
+			        <map:act type="LoginRedirect" />
+			      </map:when>
 			      <map:otherwise>
 			      	<map:transform type="LoginChooser"/>
 					<map:serialize type="xml"/>  
