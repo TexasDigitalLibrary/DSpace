@@ -179,7 +179,12 @@
                             </xsl:otherwise>
                         </xsl:choose>
                     </xsl:variable>
-                    <img alt="Thumbnail"><xsl:attribute name="src"><xsl:value-of select="$src"/></xsl:attribute></img>
+                    <a>
+                        <xsl:attribute name="href">
+                            <xsl:value-of select="//mets:FLocat[@LOCTYPE='URL']/@xlink:href"/>
+                        </xsl:attribute>
+                       <img alt="Thumbnail"><xsl:attribute name="src"><xsl:value-of select="$src"/></xsl:attribute></img>
+                    </a>
                 </xsl:when>
                 <xsl:when test="contains($title,'.3g2') or contains($title,'.3gp') or contains($title,'.asf') or contains($title,'.avi') or contains($title,'.drc') or contains($title,'.flv') or contains($title,'.m4v') or contains($title,'.mkv') or contains($title,'.mng') or contains($title,'.mov') or contains($title,'.qt') or contains($title,'.mp4') or contains($title,'.m4p') or contains($title,'.m4v') or contains($title,'.mp2') or contains($title,'.mpe') or contains($title,'.mpv') or contains($title,'.mpg') or contains($title,'.mpeg') or contains($title,'.m2v') or contains($title,'.mxf') or contains($title,'.nsv') or contains($title,'.ogg') or contains($title,'.ogv') or contains($title,'.rm') or contains($title,'.rmvb') or contains($title,'.roq') or contains($title,'.svi') or contains($title,'.vob') or contains($title,'.webm') or contains($title,'.wmv') or contains($title,'.yuv')">
                     <xsl:variable name="src">
