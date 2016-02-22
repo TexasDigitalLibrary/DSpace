@@ -708,7 +708,13 @@ public class BitstreamReader extends AbstractReader implements Recyclable
                 }
             }
             catch (UnsupportedEncodingException see) { /* Do Nothing*/ }
-            response.setHeader("Content-Disposition", "attachment;filename=" + '"' + name + '"');
+	    // If this is a large bitstream then tell the browser it should treat it as a download.
+	    int threshold = ConfigurationManager.getIntProperty("xmlui.content_disposition_threshold");
+	    if (bitstreamSize > threshold && threshold != 0) {
+	            response.setHeader("Content-Disposition", "attachment;filename=" + '"' + name + '"');
+	    } else {
+		    response.setHeader("Content-Disposition", "inline;filename=" + '"' + name + '"');
+	    }
         }
         if ( responseType.equals("HTTP_206") ) { // NOTE: Browser might expect (rangeEnd - 1)!
             response.setHeader("Content-Range", "bytes " + rangeStart + "-" + (rangeEnd-1) + "/" + fileSize);
