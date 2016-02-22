@@ -108,8 +108,8 @@ public abstract class SHERPARoMEOProtocol implements ChoiceAuthority
                 XMLReader xr = sp.getXMLReader();
                 SRHandler handler = new SRHandler(result, label, authority);
 
-                // XXX FIXME: should turn off validation here explicitly, but
-                //  it seems to be off by default.
+                //  turn off validation here explicitly, or sherpa romeo's servers will start failing (http 403) at serving the XSD for validation.
+                xr.setFeature("http://xml.org/sax/features/validation", false);
                 xr.setFeature("http://xml.org/sax/features/namespaces", true);
                 xr.setContentHandler(handler);
                 xr.setErrorHandler(handler);
