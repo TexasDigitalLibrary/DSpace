@@ -181,7 +181,7 @@
                     </xsl:variable>
                     <a>
                         <xsl:attribute name="href">
-                            <xsl:value-of select="//mets:FLocat[@LOCTYPE='URL']/@xlink:href"/>
+                            <xsl:value-of select="//mets:fileSec/mets:fileGrp[@USE='CONTENT' or @USE='ORIGINAL' or @USE='LICENSE']/mets:file/mets:FLocat[@LOCTYPE='URL']/@xlink:href"/>
                         </xsl:attribute>
                        <img alt="Thumbnail"><xsl:attribute name="src"><xsl:value-of select="$src"/></xsl:attribute></img>
                     </a>
